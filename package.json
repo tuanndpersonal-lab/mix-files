@@ -9,6 +9,9 @@
   "scripts": {
     "start": "bun src/cli.js",
     "mix": "bun src/cli.js",
+    "build:macos": "bun build --compile --outfile dist/mix-files-macos src/cli.js",
+    "build:windows": "bun build --compile --target=bun-windows-x64 --outfile dist/mix-files-windows.exe src/cli.js",
+    "build:release": "bun run build:macos && bun run build:windows",
     "smoke": "bun src/cli.js --input ./fixtures/input --output ./fixtures/output --folders 3 --clean --seed demo"
   },
   "engines": {

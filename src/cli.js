@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 import { copyFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
+import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
+import { stdin as input, stdout as output } from 'node:process';
 
 const HELP = `
 Mix MP3 files into many output folders.
 
 Usage:
-  bun src/cli.js --input <mp3-folder> --output <output-folder> --folders <count> [options]
+  mix-files --input <mp3-folder> --output <output-folder> --folders <count> [options]
+
+Run the executable without options to use interactive mode.
 
 Options:
   -i, --input <path>       Folder containing source .mp3 files
@@ -19,8 +23,8 @@ Options:
   -h, --help               Show help
 
 Example:
-  bun src/cli.js --input "D:\\music\\source" --output "D:\\music\\mixed" --folders 50 --clean
-  bun src/cli.js --input ./source --output ./mixed --folders 50 --seed batch-1
+  mix-files-windows.exe --input "D:\\music\\source" --output "D:\\music\\mixed" --folders 50 --clean
+  ./mix-files-macos --input ./source --output ./mixed --folders 50 --seed batch-1
 `;
 
 function parseArgs(argv) {
@@ -173,9 +177,37 @@ async function generateFolders(options) {
   };
 }
 
+async function promptForOptions() {
+  const terminal = readline.createInterface({ input, output });
+
+  try {
+    console.log('Mix Files - MP3 folder shuffler');
+    console.log('Press Ctrl+C to exit.');
+
+    const sourceFolder = await terminal.question('Source MP3 folder path: ');
+    const targetFolder = await terminal.question('Output folder path: ');
+    const folderCount = await terminal.question('Number of folders to create: ');
+    const cleanAnswer = await terminal.question('Clean output folder first? (y/N): ');
+    const prefixAnswer = await terminal.question('Add order prefixes like 1_song.mp3? (Y/n): ');
+    const seed = await terminal.question('Shuffle seed, optional: ');
+
+    return {
+      input: sourceFolder.trim(),
+      output: targetFolder.trim(),
+      folders: Number.parseInt(folderCount.trim(), 10),
+      clean: cleanAnswer.trim().toLowerCase() === 'y',
+      prefix: prefixAnswer.trim().toLowerCase() !== 'n',
+      seed: seed.trim() || undefined,
+    };
+  } finally {
+    terminal.close();
+  }
+}
+
 async function main() {
   try {
-    const options = parseArgs(process.argv.slice(2));
+    const argv = process.argv.slice(2);
+    const options = argv.length === 0 ? await promptForOptions() : parseArgs(argv);
     validateOptions(options);
 
     if (options.help) {

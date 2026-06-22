@@ -26,7 +26,9 @@ jobs:
 
       - name: Package source
         run: |
-          mkdir -p dist/source
+          mkdir -p dist
+          bun build --compile --outfile dist/mix-files-macos src/cli.js
+          bun build --compile --target=bun-windows-x64 --outfile dist/mix-files-windows.exe src/cli.js
           git archive --format=tar.gz --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.tar.gz HEAD
           git archive --format=zip --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.zip HEAD
 
@@ -34,6 +36,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/mix-files-macos
+            dist/mix-files-windows.exe
             dist/mix-files-${{ github.ref_name }}.tar.gz
             dist/mix-files-${{ github.ref_name }}.zip
           generate_release_notes: true

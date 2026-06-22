@@ -1,11 +1,35 @@
 # Mix Files
 
-CLI tool to create many output folders from one source folder of MP3 files. Each output folder receives all MP3 files in a shuffled order. By default, files are renamed with order prefixes such as `1_song.mp3`, `2_track.mp3` so the playback order is clear.
+CLI/executable tool to create many output folders from one source folder of MP3 files. Each output folder receives all MP3 files in a shuffled order. By default, files are renamed with order prefixes such as `1_song.mp3`, `2_track.mp3` so the playback order is clear.
+
+## Download Executable
+
+Download the latest release from GitHub:
+
+- Windows: `mix-files-windows.exe`
+- macOS: `mix-files-macos`
+
+Run the executable with no arguments and it will ask for:
+
+1. Source MP3 folder path
+2. Output folder path
+3. Number of folders to create
+4. Whether to clean the output folder first
+5. Whether to add order prefixes
+
+On macOS, if needed, allow execution once:
+
+```bash
+chmod +x ./mix-files-macos
+./mix-files-macos
+```
 
 ## Requirements
 
 - Bun installed on macOS or Windows: https://bun.sh
 - A source folder containing `.mp3` files
+
+If you use the release executable, Bun is not required.
 
 No `ffmpeg` is required because this tool shuffles and copies files; it does not merge audio tracks into one MP3.
 
