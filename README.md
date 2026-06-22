@@ -25,6 +25,8 @@ The Tauri app lets you:
 - Clean the output folder before generating.
 - See every generated output folder path and open it directly.
 
+If the folder picker does not open, rebuild after pulling the latest code. The app requires `withGlobalTauri` so the static UI can call Tauri commands.
+
 CLI/executable tool to create many output folders from one source folder of MP3 files. Each output folder receives all MP3 files in a shuffled order. By default, files are renamed with order prefixes such as `1_song.mp3`, `2_track.mp3` so the playback order is clear.
 
 ## Download Executable
