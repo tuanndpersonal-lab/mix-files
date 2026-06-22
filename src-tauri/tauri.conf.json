@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Mix Files",
+  "version": "1.3.0",
+  "identifier": "com.tuanndpersonallab.mixfiles",
+  "build": {
+    "frontendDist": "../src-ui"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Mix Files",
+        "width": 980,
+        "height": 760,
+        "minWidth": 760,
+        "minHeight": 560
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "shortDescription": "Shuffle MP3 files into folders",
+    "longDescription": "Create multiple output folders from one source folder of MP3 files with shuffled order and optional numeric prefixes."
+  }
+}

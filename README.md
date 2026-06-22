@@ -1,5 +1,30 @@
 # Mix Files
 
+Mix Files now includes a Tauri desktop app built with Rust. The app provides a visual UI for choosing folders, generating shuffled output folders, and opening generated paths.
+
+## Desktop App
+
+Run locally for development:
+
+```bash
+bun install
+bun tauri:dev
+```
+
+Build a desktop app:
+
+```bash
+bun tauri:build
+```
+
+The Tauri app lets you:
+
+- Choose source and output folders with native folder picker dialogs.
+- Enter the number of folders to create.
+- Toggle numeric prefixes such as `1_song.mp3`.
+- Clean the output folder before generating.
+- See every generated output folder path and open it directly.
+
 CLI/executable tool to create many output folders from one source folder of MP3 files. Each output folder receives all MP3 files in a shuffled order. By default, files are renamed with order prefixes such as `1_song.mp3`, `2_track.mp3` so the playback order is clear.
 
 ## Download Executable

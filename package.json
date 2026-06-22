@@ -12,9 +12,14 @@
     "build:macos": "bun build --compile --outfile dist/mix-files-macos src/cli.js",
     "build:windows": "bun build --compile --target=bun-windows-x64 --outfile dist/mix-files-windows.exe src/cli.js",
     "build:release": "bun run build:macos && bun run build:windows",
-    "smoke": "bun src/cli.js --input ./fixtures/input --output ./fixtures/output --folders 3 --clean --seed demo"
+    "smoke": "bun src/cli.js --input ./fixtures/input --output ./fixtures/output --folders 3 --clean --seed demo",
+    "tauri:dev": "bunx tauri dev",
+    "tauri:build": "bunx tauri build"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
   }
 }

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mix Files</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">MP3 Folder Mixer</p>
+          <h1>Mix Files</h1>
+          <p class="subtitle">Shuffle MP3 files into many output folders with numbered playback order.</p>
+        </div>
+        <div class="badge">Tauri + Rust</div>
+      </section>
+
+      <section class="panel">
+        <div class="field">
+          <label for="inputFolder">Source MP3 Folder</label>
+          <div class="row">
+            <input id="inputFolder" type="text" placeholder="Choose or paste source folder path" />
+            <button id="chooseInput" type="button">Choose</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="outputFolder">Output Folder</label>
+          <div class="row">
+            <input id="outputFolder" type="text" placeholder="Choose or paste output folder path" />
+            <button id="chooseOutput" type="button">Choose</button>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="folderCount">Folders to Create</label>
+            <input id="folderCount" type="number" min="1" value="50" />
+          </div>
+
+          <div class="field">
+            <label for="seed">Shuffle Seed <span>optional</span></label>
+            <input id="seed" type="text" placeholder="batch-1" />
+          </div>
+        </div>
+
+        <div class="options">
+          <label class="check">
+            <input id="prefixFiles" type="checkbox" checked />
+            <span>Add prefixes like <strong>1_song.mp3</strong></span>
+          </label>
+          <label class="check">
+            <input id="cleanOutput" type="checkbox" />
+            <span>Clean output folder before generating</span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="generate" class="primary" type="button">Generate Folders</button>
+          <button id="openOutput" type="button" disabled>Open Output Folder</button>
+        </div>
+
+        <p id="status" class="status idle">Ready</p>
+      </section>
+
+      <section class="results">
+        <div class="resultsHeader">
+          <div>
+            <p class="eyebrow">Generated Paths</p>
+            <h2>Output folders</h2>
+          </div>
+          <button id="copyPaths" type="button" disabled>Copy All</button>
+        </div>
+        <div id="paths" class="paths empty">No folders generated yet.</div>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
