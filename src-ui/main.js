@@ -25,9 +25,50 @@ const openOutput = document.querySelector('#openOutput');
 const copyPaths = document.querySelector('#copyPaths');
 const status = document.querySelector('#status');
 const paths = document.querySelector('#paths');
+const dropZones = document.querySelectorAll('.dropZone');
 
 let generatedFolders = [];
 let lastOutputFolder = '';
+
+for (const dropZone of dropZones) {
+  dropZone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropZone.classList.add('dragging');
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragging');
+  });
+
+  dropZone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropZone.classList.remove('dragging');
+
+    const droppedPath = getDroppedPath(event);
+
+    if (!droppedPath) {
+      setStatus('Could not read dropped folder path.', 'error');
+      return;
+    }
+
+    const target = dropZone.dataset.dropTarget === 'input' ? inputFolder : outputFolder;
+    target.value = droppedPath;
+    setStatus('Dropped folder path added.', 'success');
+  });
+}
+
+function getDroppedPath(event) {
+  const item = event.dataTransfer?.items?.[0];
+
+  if (item) {
+    const entry = item.webkitGetAsEntry?.();
+    if (entry?.isDirectory) {
+      return event.dataTransfer.files?.[0]?.path || event.dataTransfer.getData('text/plain');
+    }
+  }
+
+  return event.dataTransfer?.files?.[0]?.path || event.dataTransfer?.getData('text/plain') || '';
+}
 
 chooseInput.addEventListener('click', async () => {
   await chooseFolder(inputFolder, 'Opening source folder picker...');

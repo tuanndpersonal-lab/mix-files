@@ -139,6 +139,25 @@ h2 {
   margin-bottom: 18px;
 }
 
+.dropZone {
+  border: 1px dashed transparent;
+  border-radius: 18px;
+  padding: 10px;
+  margin: -10px -10px 8px;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.dropZone.dragging {
+  border-color: #526cff;
+  background: rgba(82, 108, 255, 0.08);
+}
+
+.dropHint {
+  color: #7b8598;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .field label {
   color: #354057;
   font-size: 14px;
