@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: GitHub Release
+  release-macos:
+    name: macOS Tauri Release
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -21,24 +21,22 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Package source
+      - name: Build Tauri app
+        run: bun tauri:build
+
+      - name: Stage artifacts
         run: |
           mkdir -p dist
-          bun build --compile --outfile dist/mix-files-macos src/cli.js
-          bun build --compile --target=bun-windows-x64 --outfile dist/mix-files-windows.exe src/cli.js
-          chmod +x dist/mix-files-macos
-
-          mkdir -p dist/dmg-root
-          cp dist/mix-files-macos dist/dmg-root/MixFiles
-          hdiutil create -volname MixFiles -srcfolder dist/dmg-root -ov -format UDZO dist/MixFiles-${GITHUB_REF_NAME}.dmg
-
-          mkdir -p dist/pkg-root/usr/local/bin
-          cp dist/mix-files-macos dist/pkg-root/usr/local/bin/mix-files
-          pkgbuild --root dist/pkg-root --identifier com.tuanndpersonal-lab.mix-files --version ${GITHUB_REF_NAME#v} --install-location / dist/MixFiles-${GITHUB_REF_NAME}.pkg
-
+          cp src-tauri/target/release/bundle/dmg/*.dmg dist/
+          if compgen -G "src-tauri/target/release/bundle/macos/*.app" > /dev/null; then
+            ditto -c -k --sequesterRsrc --keepParent src-tauri/target/release/bundle/macos/*.app dist/MixFiles-${GITHUB_REF_NAME}-macos-app.zip
+          fi
           git archive --format=tar.gz --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.tar.gz HEAD
           git archive --format=zip --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.zip HEAD
 
@@ -46,10 +44,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/mix-files-macos
-            dist/mix-files-windows.exe
-            dist/MixFiles-${{ github.ref_name }}.dmg
-            dist/MixFiles-${{ github.ref_name }}.pkg
+            dist/*.dmg
+            dist/*-macos-app.zip
             dist/mix-files-${{ github.ref_name }}.tar.gz
             dist/mix-files-${{ github.ref_name }}.zip
           generate_release_notes: true
