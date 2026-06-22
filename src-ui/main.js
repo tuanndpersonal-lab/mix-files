@@ -1,4 +1,16 @@
-const { invoke } = window.__TAURI__.core;
+function getInvoke() {
+  const invoke = window.__TAURI__?.core?.invoke;
+
+  if (!invoke) {
+    throw new Error('Tauri API is not available. Please rebuild and open the Tauri app, not index.html in a browser.');
+  }
+
+  return invoke;
+}
+
+async function invoke(command, args) {
+  return getInvoke()(command, args);
+}
 
 const inputFolder = document.querySelector('#inputFolder');
 const outputFolder = document.querySelector('#outputFolder');
@@ -18,14 +30,29 @@ let generatedFolders = [];
 let lastOutputFolder = '';
 
 chooseInput.addEventListener('click', async () => {
-  const folder = await invoke('select_folder');
-  if (folder) inputFolder.value = folder;
+  await chooseFolder(inputFolder, 'Opening source folder picker...');
 });
 
 chooseOutput.addEventListener('click', async () => {
-  const folder = await invoke('select_folder');
-  if (folder) outputFolder.value = folder;
+  await chooseFolder(outputFolder, 'Opening output folder picker...');
 });
+
+async function chooseFolder(targetInput, message) {
+  setStatus(message, 'idle');
+
+  try {
+    const folder = await invoke('select_folder');
+
+    if (folder) {
+      targetInput.value = folder;
+      setStatus('Folder selected.', 'success');
+    } else {
+      setStatus('Folder selection cancelled.', 'idle');
+    }
+  } catch (error) {
+    setStatus(String(error), 'error');
+  }
+}
 
 generate.addEventListener('click', async () => {
   setBusy(true);
