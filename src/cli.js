@@ -148,6 +148,7 @@ async function generateFolders(options) {
   const outputFolder = path.resolve(options.output);
   const files = await getMp3Files(inputFolder);
   const random = createRandom(options.seed);
+  const generatedFolders = [];
 
   if (options.clean) {
     await rm(outputFolder, { recursive: true, force: true });
@@ -159,6 +160,7 @@ async function generateFolders(options) {
     const folderName = String(folderIndex + 1).padStart(String(options.folders).length, '0');
     const targetFolder = path.join(outputFolder, folderName);
     const shuffledFiles = shuffleFiles(files, random);
+    generatedFolders.push(targetFolder);
 
     await mkdir(targetFolder, { recursive: true });
 
@@ -174,7 +176,18 @@ async function generateFolders(options) {
     outputFolder,
     sourceFiles: files.length,
     folders: options.folders,
+    generatedFolders,
   };
+}
+
+function normalizeDroppedPath(value) {
+  let normalized = value.trim();
+
+  if ((normalized.startsWith('"') && normalized.endsWith('"')) || (normalized.startsWith("'") && normalized.endsWith("'"))) {
+    normalized = normalized.slice(1, -1);
+  }
+
+  return normalized.replace(/\\ /g, ' ');
 }
 
 async function promptForOptions() {
@@ -184,16 +197,16 @@ async function promptForOptions() {
     console.log('Mix Files - MP3 folder shuffler');
     console.log('Press Ctrl+C to exit.');
 
-    const sourceFolder = await terminal.question('Source MP3 folder path: ');
-    const targetFolder = await terminal.question('Output folder path: ');
+    const sourceFolder = await terminal.question('Source MP3 folder path, drag and drop folder here: ');
+    const targetFolder = await terminal.question('Output folder path, drag and drop folder here: ');
     const folderCount = await terminal.question('Number of folders to create: ');
     const cleanAnswer = await terminal.question('Clean output folder first? (y/N): ');
     const prefixAnswer = await terminal.question('Add order prefixes like 1_song.mp3? (Y/n): ');
     const seed = await terminal.question('Shuffle seed, optional: ');
 
     return {
-      input: sourceFolder.trim(),
-      output: targetFolder.trim(),
+      input: normalizeDroppedPath(sourceFolder),
+      output: normalizeDroppedPath(targetFolder),
       folders: Number.parseInt(folderCount.trim(), 10),
       clean: cleanAnswer.trim().toLowerCase() === 'y',
       prefix: prefixAnswer.trim().toLowerCase() !== 'n',
@@ -205,9 +218,11 @@ async function promptForOptions() {
 }
 
 async function main() {
+  const interactive = process.argv.slice(2).length === 0;
+
   try {
     const argv = process.argv.slice(2);
-    const options = argv.length === 0 ? await promptForOptions() : parseArgs(argv);
+    const options = interactive ? await promptForOptions() : parseArgs(argv);
     validateOptions(options);
 
     if (options.help) {
@@ -219,10 +234,20 @@ async function main() {
     console.log(`Done: created ${result.folders} folders from ${result.sourceFiles} MP3 files.`);
     console.log(`Input: ${result.inputFolder}`);
     console.log(`Output: ${result.outputFolder}`);
+    console.log('Generated folders:');
+    for (const folder of result.generatedFolders) {
+      console.log(folder);
+    }
   } catch (error) {
     console.error(`Error: ${error.message}`);
     console.error('Run with --help for usage.');
     process.exitCode = 1;
+  } finally {
+    if (interactive) {
+      const terminal = readline.createInterface({ input, output });
+      await terminal.question('Press Enter to close...');
+      terminal.close();
+    }
   }
 }
 
@@ -232,4 +257,4 @@ if (isDirectRun) {
   await main();
 }
 
-export { generateFolders, parseArgs, shuffleFiles };
+export { generateFolders, normalizeDroppedPath, parseArgs, shuffleFiles };

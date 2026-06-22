@@ -17,6 +17,8 @@ Run the executable with no arguments and it will ask for:
 4. Whether to clean the output folder first
 5. Whether to add order prefixes
 
+You can drag and drop a folder into the executable window when it asks for a path. After generating files, the tool prints every generated folder path so you can copy/open them easily. The window waits for Enter before closing.
+
 On macOS, if needed, allow execution once:
 
 ```bash
