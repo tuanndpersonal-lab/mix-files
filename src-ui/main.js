@@ -12,6 +12,16 @@ async function invoke(command, args) {
   return getInvoke()(command, args);
 }
 
+function getListen() {
+  const listen = window.__TAURI__?.event?.listen;
+
+  if (!listen) {
+    throw new Error('Tauri event API is not available. Please rebuild and open the Tauri app, not index.html in a browser.');
+  }
+
+  return listen;
+}
+
 const inputFolder = document.querySelector('#inputFolder');
 const outputFolder = document.querySelector('#outputFolder');
 const folderCount = document.querySelector('#folderCount');
@@ -55,6 +65,61 @@ for (const dropZone of dropZones) {
     target.value = droppedPath;
     setStatus('Dropped folder path added.', 'success');
   });
+}
+
+setupTauriFileDrop();
+
+async function setupTauriFileDrop() {
+  try {
+    const listen = getListen();
+
+    await listen('tauri://drag-over', (event) => {
+      const dropZone = getDropZoneFromPosition(event.payload?.position);
+      setActiveDropZone(dropZone);
+    });
+
+    await listen('tauri://drag-leave', () => {
+      setActiveDropZone(null);
+    });
+
+    await listen('tauri://drag-drop', (event) => {
+      const droppedPath = event.payload?.paths?.[0];
+      const dropZone = getDropZoneFromPosition(event.payload?.position);
+
+      setActiveDropZone(null);
+
+      if (!droppedPath) {
+        setStatus('Could not read dropped folder path.', 'error');
+        return;
+      }
+
+      if (!dropZone) {
+        setStatus('Drop the folder inside Source MP3 Folder or Output Folder.', 'error');
+        return;
+      }
+
+      const target = dropZone.dataset.dropTarget === 'input' ? inputFolder : outputFolder;
+      target.value = droppedPath;
+      setStatus('Dropped folder path added.', 'success');
+    });
+  } catch (error) {
+    setStatus(String(error), 'error');
+  }
+}
+
+function getDropZoneFromPosition(position) {
+  if (!position) {
+    return null;
+  }
+
+  const element = document.elementFromPoint(position.x, position.y);
+  return element?.closest?.('.dropZone') || null;
+}
+
+function setActiveDropZone(activeDropZone) {
+  for (const dropZone of dropZones) {
+    dropZone.classList.toggle('dragging', dropZone === activeDropZone);
+  }
 }
 
 function getDroppedPath(event) {
