@@ -11,7 +11,7 @@ permissions:
 jobs:
   release:
     name: GitHub Release
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,6 +29,16 @@ jobs:
           mkdir -p dist
           bun build --compile --outfile dist/mix-files-macos src/cli.js
           bun build --compile --target=bun-windows-x64 --outfile dist/mix-files-windows.exe src/cli.js
+          chmod +x dist/mix-files-macos
+
+          mkdir -p dist/dmg-root
+          cp dist/mix-files-macos dist/dmg-root/MixFiles
+          hdiutil create -volname MixFiles -srcfolder dist/dmg-root -ov -format UDZO dist/MixFiles-${GITHUB_REF_NAME}.dmg
+
+          mkdir -p dist/pkg-root/usr/local/bin
+          cp dist/mix-files-macos dist/pkg-root/usr/local/bin/mix-files
+          pkgbuild --root dist/pkg-root --identifier com.tuanndpersonal-lab.mix-files --version ${GITHUB_REF_NAME#v} --install-location / dist/MixFiles-${GITHUB_REF_NAME}.pkg
+
           git archive --format=tar.gz --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.tar.gz HEAD
           git archive --format=zip --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.zip HEAD
 
@@ -38,6 +48,8 @@ jobs:
           files: |
             dist/mix-files-macos
             dist/mix-files-windows.exe
+            dist/MixFiles-${{ github.ref_name }}.dmg
+            dist/MixFiles-${{ github.ref_name }}.pkg
             dist/mix-files-${{ github.ref_name }}.tar.gz
             dist/mix-files-${{ github.ref_name }}.zip
           generate_release_notes: true

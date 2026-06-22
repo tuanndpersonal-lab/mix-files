@@ -7,7 +7,9 @@ CLI/executable tool to create many output folders from one source folder of MP3 
 Download the latest release from GitHub:
 
 - Windows: `mix-files-windows.exe`
-- macOS: `mix-files-macos`
+- macOS easiest option: `MixFiles-vX.Y.Z.dmg`
+- macOS installer option: `MixFiles-vX.Y.Z.pkg`
+- macOS raw binary: `mix-files-macos`
 
 Run the executable with no arguments and it will ask for:
 
@@ -25,6 +27,8 @@ On macOS, if needed, allow execution once:
 chmod +x ./mix-files-macos
 ./mix-files-macos
 ```
+
+For the `.dmg`, open it and run `MixFiles`. If macOS blocks it, right-click `MixFiles`, choose `Open`, then confirm. For the `.pkg`, install it and run `mix-files` from Terminal.
 
 ## Requirements
 
