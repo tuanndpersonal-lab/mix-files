@@ -1,0 +1,17 @@
+{
+  "name": "mix-files",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "mix-files": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "bun src/cli.js",
+    "mix": "bun src/cli.js",
+    "smoke": "bun src/cli.js --input ./fixtures/input --output ./fixtures/output --folders 3 --clean --seed demo"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
