@@ -22,18 +22,20 @@
           <label for="inputFolder">Source MP3 Folder</label>
           <div class="row">
             <input id="inputFolder" type="text" placeholder="Choose or paste source folder path" />
+            <button id="pasteInput" type="button">Paste Path</button>
             <button id="chooseInput" type="button">Choose</button>
           </div>
-          <p class="dropHint">Drag and drop the source folder here.</p>
+          <p class="dropHint">Tip: in Finder, copy a folder path with Option + Command + C, then paste it here.</p>
         </div>
 
         <div class="field dropZone" data-drop-target="output">
           <label for="outputFolder">Output Folder</label>
           <div class="row">
             <input id="outputFolder" type="text" placeholder="Choose or paste output folder path" />
+            <button id="pasteOutput" type="button">Paste Path</button>
             <button id="chooseOutput" type="button">Choose</button>
           </div>
-          <p class="dropHint">Drag and drop the output folder here.</p>
+          <p class="dropHint">Tip: you can also type or paste the folder path manually.</p>
         </div>
 
         <div class="grid">

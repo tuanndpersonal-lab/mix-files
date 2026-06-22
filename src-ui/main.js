@@ -30,6 +30,8 @@ const prefixFiles = document.querySelector('#prefixFiles');
 const cleanOutput = document.querySelector('#cleanOutput');
 const chooseInput = document.querySelector('#chooseInput');
 const chooseOutput = document.querySelector('#chooseOutput');
+const pasteInput = document.querySelector('#pasteInput');
+const pasteOutput = document.querySelector('#pasteOutput');
 const generate = document.querySelector('#generate');
 const openOutput = document.querySelector('#openOutput');
 const copyPaths = document.querySelector('#copyPaths');
@@ -143,6 +145,49 @@ chooseOutput.addEventListener('click', async () => {
   await chooseFolder(outputFolder, 'Opening output folder picker...');
 });
 
+pasteInput.addEventListener('click', async () => {
+  await pastePathInto(inputFolder);
+});
+
+pasteOutput.addEventListener('click', async () => {
+  await pastePathInto(outputFolder);
+});
+
+inputFolder.addEventListener('blur', () => {
+  inputFolder.value = normalizePath(inputFolder.value);
+});
+
+outputFolder.addEventListener('blur', () => {
+  outputFolder.value = normalizePath(outputFolder.value);
+});
+
+async function pastePathInto(targetInput) {
+  try {
+    const text = await navigator.clipboard.readText();
+    const path = normalizePath(text);
+
+    if (!path) {
+      setStatus('Clipboard is empty.', 'error');
+      return;
+    }
+
+    targetInput.value = path;
+    setStatus('Path pasted.', 'success');
+  } catch (error) {
+    setStatus(`Could not read clipboard. Paste manually with Command + V. ${error}`, 'error');
+  }
+}
+
+function normalizePath(value) {
+  let normalized = String(value || '').trim();
+
+  if ((normalized.startsWith('"') && normalized.endsWith('"')) || (normalized.startsWith("'") && normalized.endsWith("'"))) {
+    normalized = normalized.slice(1, -1);
+  }
+
+  return normalized.replace(/\\ /g, ' ');
+}
+
 async function chooseFolder(targetInput, message) {
   setStatus(message, 'idle');
 
@@ -168,8 +213,8 @@ generate.addEventListener('click', async () => {
   try {
     const result = await invoke('mix_files', {
       options: {
-        inputFolder: inputFolder.value,
-        outputFolder: outputFolder.value,
+        inputFolder: normalizePath(inputFolder.value),
+        outputFolder: normalizePath(outputFolder.value),
         folderCount: Number(folderCount.value),
         prefixFiles: prefixFiles.checked,
         cleanOutput: cleanOutput.checked,
