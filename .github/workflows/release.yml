@@ -40,7 +40,7 @@ jobs:
           git archive --format=tar.gz --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.tar.gz HEAD
           git archive --format=zip --prefix=mix-files-${GITHUB_REF_NAME}/ -o dist/mix-files-${GITHUB_REF_NAME}.zip HEAD
 
-      - name: Create GitHub Release
+      - name: Upload macOS release assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -48,4 +48,39 @@ jobs:
             dist/*-macos-app.zip
             dist/mix-files-${{ github.ref_name }}.tar.gz
             dist/mix-files-${{ github.ref_name }}.zip
+          generate_release_notes: true
+
+  release-windows:
+    name: Windows Tauri Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Tauri app
+        run: bun tauri:build
+
+      - name: Stage artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Get-ChildItem -Path src-tauri/target/release/bundle -Recurse -Include *.exe,*.msi | Copy-Item -Destination dist
+
+      - name: Upload Windows release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.msi
           generate_release_notes: true
