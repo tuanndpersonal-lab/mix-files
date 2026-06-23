@@ -105,6 +105,21 @@ def package_artifact(artifact: Path) -> Path:
     machine = normalize_machine_name()
     archive_base = DIST_ROOT / f"{APP_NAME}-{system}-{machine}"
 
+    if artifact.suffix == ".app" and platform.system() == "Darwin":
+        archive = archive_base.with_suffix(".zip")
+        archive.unlink(missing_ok=True)
+        run([
+            "ditto",
+            "-c",
+            "-k",
+            "--sequesterRsrc",
+            "--keepParent",
+            str(artifact),
+            str(archive),
+        ])
+        print(f"Packaged archive: {archive}")
+        return archive
+
     if artifact.suffix == ".app":
         source = artifact
     elif artifact.is_file():
