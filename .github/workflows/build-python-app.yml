@@ -42,7 +42,10 @@ jobs:
 
       - name: Upload release asset
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/python/*.zip
-          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          for asset in dist/python/*.zip; do
+            gh release upload "${GITHUB_REF_NAME}" "$asset" --clobber
+          done
