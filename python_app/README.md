@@ -61,3 +61,9 @@ The generated `.exe` folder and `.zip` are created in `dist\python\`.
 ### GitHub Actions
 
 The workflow at `.github/workflows/build-python-app.yml` builds both macOS and Windows artifacts. Run it manually from the Actions tab or push a tag matching `python-v*`.
+
+If macOS blocks the downloaded app, right-click it and choose `Open`, or run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/MixFiles.app
+```

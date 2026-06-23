@@ -78,9 +78,31 @@ def build() -> Path:
     return artifact
 
 
-def package_artifact(artifact: Path) -> Path:
-    system = platform.system().lower()
+def normalize_machine_name() -> str:
     machine = platform.machine().lower() or "unknown"
+
+    if machine in {"x86_64", "amd64"}:
+        return "amd64"
+
+    if machine in {"arm64", "aarch64"}:
+        return "arm64"
+
+    return machine
+
+
+def sign_macos_app(artifact: Path) -> None:
+    if platform.system() != "Darwin" or artifact.suffix != ".app":
+        return
+
+    run(["xattr", "-cr", str(artifact)])
+    run(["codesign", "--force", "--deep", "--sign", "-", str(artifact)])
+
+
+def package_artifact(artifact: Path) -> Path:
+    sign_macos_app(artifact)
+
+    system = platform.system().lower()
+    machine = normalize_machine_name()
     archive_base = DIST_ROOT / f"{APP_NAME}-{system}-{machine}"
 
     if artifact.suffix == ".app":

@@ -40,6 +40,12 @@ Windows builds must run on Windows:
 
 The GitHub Actions workflow `.github/workflows/build-python-app.yml` can build both macOS and Windows artifacts.
 
+If macOS says the app cannot be opened because it is from an unidentified developer, run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/MixFiles.app
+```
+
 ## Desktop App
 
 Run locally for development:
