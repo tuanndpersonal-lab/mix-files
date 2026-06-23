@@ -17,6 +17,7 @@ Options:
   -i, --input <path>       Folder containing source .mp3 files
   -o, --output <path>      Folder where output folders are created
   -n, --folders <count>    Number of folders to create
+  -f, --files <count>      Number of MP3 files per folder, default: all files
   --prefix / --no-prefix   Add order prefix to file names, default: --prefix
   --clean                  Delete output folder before generating
   --seed <text>            Deterministic shuffle seed
@@ -48,6 +49,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === '-n' || arg === '--folders') {
       options.folders = Number.parseInt(readValue(arg, next), 10);
+      index += 1;
+    } else if (arg === '-f' || arg === '--files') {
+      options.files = Number.parseInt(readValue(arg, next), 10);
       index += 1;
     } else if (arg === '--prefix') {
       options.prefix = true;
@@ -89,6 +93,10 @@ function validateOptions(options) {
 
   if (!Number.isInteger(options.folders) || options.folders < 1) {
     throw new Error('--folders must be a positive integer');
+  }
+
+  if (options.files !== undefined && (!Number.isInteger(options.files) || options.files < 1)) {
+    throw new Error('--files must be a positive integer');
   }
 }
 
@@ -147,8 +155,13 @@ async function generateFolders(options) {
   const inputFolder = path.resolve(options.input);
   const outputFolder = path.resolve(options.output);
   const files = await getMp3Files(inputFolder);
+  const filesPerFolder = options.files ?? files.length;
   const random = createRandom(options.seed);
   const generatedFolders = [];
+
+  if (filesPerFolder > files.length) {
+    throw new Error(`--files cannot be greater than available MP3 files (${files.length})`);
+  }
 
   if (options.clean) {
     await rm(outputFolder, { recursive: true, force: true });
@@ -159,7 +172,7 @@ async function generateFolders(options) {
   for (let folderIndex = 0; folderIndex < options.folders; folderIndex += 1) {
     const folderName = String(folderIndex + 1).padStart(String(options.folders).length, '0');
     const targetFolder = path.join(outputFolder, folderName);
-    const shuffledFiles = shuffleFiles(files, random);
+    const shuffledFiles = shuffleFiles(files, random).slice(0, filesPerFolder);
     generatedFolders.push(targetFolder);
 
     await mkdir(targetFolder, { recursive: true });
@@ -175,6 +188,7 @@ async function generateFolders(options) {
     inputFolder,
     outputFolder,
     sourceFiles: files.length,
+    filesPerFolder,
     folders: options.folders,
     generatedFolders,
   };
@@ -200,6 +214,7 @@ async function promptForOptions() {
     const sourceFolder = await terminal.question('Source MP3 folder path, drag and drop folder here: ');
     const targetFolder = await terminal.question('Output folder path, drag and drop folder here: ');
     const folderCount = await terminal.question('Number of folders to create: ');
+    const fileCount = await terminal.question('Number of MP3 files per folder, empty for all: ');
     const cleanAnswer = await terminal.question('Clean output folder first? (y/N): ');
     const prefixAnswer = await terminal.question('Add order prefixes like 1_song.mp3? (Y/n): ');
     const seed = await terminal.question('Shuffle seed, optional: ');
@@ -208,6 +223,7 @@ async function promptForOptions() {
       input: normalizeDroppedPath(sourceFolder),
       output: normalizeDroppedPath(targetFolder),
       folders: Number.parseInt(folderCount.trim(), 10),
+      files: fileCount.trim() ? Number.parseInt(fileCount.trim(), 10) : undefined,
       clean: cleanAnswer.trim().toLowerCase() === 'y',
       prefix: prefixAnswer.trim().toLowerCase() !== 'n',
       seed: seed.trim() || undefined,
@@ -231,7 +247,7 @@ async function main() {
     }
 
     const result = await generateFolders(options);
-    console.log(`Done: created ${result.folders} folders from ${result.sourceFiles} MP3 files.`);
+    console.log(`Done: created ${result.folders} folders with ${result.filesPerFolder} of ${result.sourceFiles} MP3 files each.`);
     console.log(`Input: ${result.inputFolder}`);
     console.log(`Output: ${result.outputFolder}`);
     console.log('Generated folders:');

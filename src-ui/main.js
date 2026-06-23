@@ -25,6 +25,7 @@ function getListen() {
 const inputFolder = document.querySelector('#inputFolder');
 const outputFolder = document.querySelector('#outputFolder');
 const folderCount = document.querySelector('#folderCount');
+const filesPerFolder = document.querySelector('#filesPerFolder');
 const seed = document.querySelector('#seed');
 const prefixFiles = document.querySelector('#prefixFiles');
 const cleanOutput = document.querySelector('#cleanOutput');
@@ -216,6 +217,7 @@ generate.addEventListener('click', async () => {
         inputFolder: normalizePath(inputFolder.value),
         outputFolder: normalizePath(outputFolder.value),
         folderCount: Number(folderCount.value),
+        filesPerFolder: filesPerFolder.value ? Number(filesPerFolder.value) : null,
         prefixFiles: prefixFiles.checked,
         cleanOutput: cleanOutput.checked,
         seed: seed.value || null,
@@ -225,7 +227,7 @@ generate.addEventListener('click', async () => {
     generatedFolders = result.generatedFolders;
     lastOutputFolder = result.outputFolder;
     renderPaths(generatedFolders);
-    setStatus(`Done: created ${generatedFolders.length} folders from ${result.sourceFileCount} MP3 files.`, 'success');
+    setStatus(`Done: created ${generatedFolders.length} folders with ${result.filesPerFolder} of ${result.sourceFileCount} MP3 files each.`, 'success');
     openOutput.disabled = false;
     copyPaths.disabled = generatedFolders.length === 0;
   } catch (error) {
@@ -250,6 +252,7 @@ function setBusy(isBusy) {
   generate.disabled = isBusy;
   chooseInput.disabled = isBusy;
   chooseOutput.disabled = isBusy;
+  filesPerFolder.disabled = isBusy;
 }
 
 function setStatus(message, type) {

@@ -9,6 +9,7 @@ struct MixOptions {
     input_folder: String,
     output_folder: String,
     folder_count: usize,
+    files_per_folder: Option<usize>,
     prefix_files: bool,
     clean_output: bool,
     seed: Option<String>,
@@ -20,6 +21,7 @@ struct MixResult {
     input_folder: String,
     output_folder: String,
     source_file_count: usize,
+    files_per_folder: usize,
     generated_folders: Vec<String>,
 }
 
@@ -31,6 +33,10 @@ enum MixError {
     MissingOutput,
     #[error("Number of folders must be greater than 0")]
     InvalidFolderCount,
+    #[error("Number of files per folder must be greater than 0")]
+    InvalidFilesPerFolder,
+    #[error("Number of files per folder cannot be greater than available MP3 files ({0})")]
+    TooManyFilesPerFolder(usize),
     #[error("No .mp3 files found in {0}")]
     NoMp3Files(String),
     #[error("Could not read folder {path}: {source}")]
@@ -73,8 +79,13 @@ fn mix_files(options: MixOptions) -> Result<MixResult, MixError> {
     let input_folder = PathBuf::from(options.input_folder.trim());
     let output_folder = PathBuf::from(options.output_folder.trim());
     let files = get_mp3_files(&input_folder)?;
+    let files_per_folder = options.files_per_folder.unwrap_or(files.len());
     let mut random = SeededRandom::new(options.seed.as_deref());
     let mut generated_folders = Vec::with_capacity(options.folder_count);
+
+    if files_per_folder > files.len() {
+        return Err(MixError::TooManyFilesPerFolder(files.len()));
+    }
 
     if options.clean_output && output_folder.exists() {
         fs::remove_dir_all(&output_folder).map_err(|source| MixError::CleanFolder {
@@ -88,7 +99,10 @@ fn mix_files(options: MixOptions) -> Result<MixResult, MixError> {
     for folder_index in 0..options.folder_count {
         let folder_name = format_number(folder_index + 1, options.folder_count);
         let target_folder = output_folder.join(folder_name);
-        let shuffled_files = shuffle_files(&files, &mut random);
+        let shuffled_files = shuffle_files(&files, &mut random)
+            .into_iter()
+            .take(files_per_folder)
+            .collect::<Vec<_>>();
 
         create_folder(&target_folder)?;
 
@@ -119,6 +133,7 @@ fn mix_files(options: MixOptions) -> Result<MixResult, MixError> {
         input_folder: input_folder.to_string_lossy().to_string(),
         output_folder: output_folder.to_string_lossy().to_string(),
         source_file_count: files.len(),
+        files_per_folder,
         generated_folders,
     })
 }
@@ -134,6 +149,10 @@ fn validate_options(options: &MixOptions) -> Result<(), MixError> {
 
     if options.folder_count == 0 {
         return Err(MixError::InvalidFolderCount);
+    }
+
+    if matches!(options.files_per_folder, Some(0)) {
+        return Err(MixError::InvalidFilesPerFolder);
     }
 
     Ok(())

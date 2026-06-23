@@ -2,6 +2,44 @@
 
 Mix Files now includes a Tauri desktop app built with Rust. The app provides a visual UI for choosing folders, generating shuffled output folders, and opening generated paths.
 
+## Python + PyQt App
+
+Use this version if you want the simplest Python-based desktop app:
+
+```bash
+cd python_app
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python mix_files_pyqt.py
+```
+
+On Windows PowerShell:
+
+```powershell
+cd python_app
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python mix_files_pyqt.py
+```
+
+See `python_app/README.md` for PyInstaller packaging instructions.
+
+Build installable archives:
+
+```bash
+./scripts/build-python-macos.sh
+```
+
+Windows builds must run on Windows:
+
+```powershell
+.\scripts\build-python-windows.ps1
+```
+
+The GitHub Actions workflow `.github/workflows/build-python-app.yml` can build both macOS and Windows artifacts.
+
 ## Desktop App
 
 Run locally for development:
@@ -21,13 +59,14 @@ The Tauri app lets you:
 
 - Choose source and output folders with native folder picker dialogs.
 - Enter the number of folders to create.
+- Enter how many MP3 files each folder should contain, or leave it empty to use all files.
 - Toggle numeric prefixes such as `1_song.mp3`.
 - Clean the output folder before generating.
 - See every generated output folder path and open it directly.
 
 If the folder picker does not open, rebuild after pulling the latest code. The app requires `withGlobalTauri` so the static UI can call Tauri commands.
 
-CLI/executable tool to create many output folders from one source folder of MP3 files. Each output folder receives all MP3 files in a shuffled order. By default, files are renamed with order prefixes such as `1_song.mp3`, `2_track.mp3` so the playback order is clear.
+CLI/executable tool to create many output folders from one source folder of MP3 files. Each output folder receives a configurable number of MP3 files in a shuffled order. By default, each folder uses all files and files are renamed with order prefixes such as `1_song.mp3`, `2_track.mp3` so the playback order is clear.
 
 ## Download Executable
 
@@ -43,8 +82,9 @@ Run the executable with no arguments and it will ask for:
 1. Source MP3 folder path
 2. Output folder path
 3. Number of folders to create
-4. Whether to clean the output folder first
-5. Whether to add order prefixes
+4. Number of MP3 files per folder, or empty for all files
+5. Whether to clean the output folder first
+6. Whether to add order prefixes
 
 You can drag and drop a folder into the executable window when it asks for a path. After generating files, the tool prints every generated folder path so you can copy/open them easily. The window waits for Enter before closing.
 
@@ -69,19 +109,19 @@ No `ffmpeg` is required because this tool shuffles and copies files; it does not
 ## Usage
 
 ```bash
-bun src/cli.js --input <source-folder> --output <output-folder> --folders <count>
+bun src/cli.js --input <source-folder> --output <output-folder> --folders <count> --files <count>
 ```
 
 ### Windows example
 
 ```powershell
-bun src/cli.js --input "D:\music\source" --output "D:\music\mixed" --folders 50 --clean
+bun src/cli.js --input "D:\music\source" --output "D:\music\mixed" --folders 50 --files 5 --clean
 ```
 
 ### macOS example
 
 ```bash
-bun src/cli.js --input "/Users/me/Music/source" --output "/Users/me/Music/mixed" --folders 50 --clean
+bun src/cli.js --input "/Users/me/Music/source" --output "/Users/me/Music/mixed" --folders 50 --files 5 --clean
 ```
 
 ## Options
@@ -89,6 +129,7 @@ bun src/cli.js --input "/Users/me/Music/source" --output "/Users/me/Music/mixed"
 - `--input`, `-i`: Source folder containing `.mp3` files.
 - `--output`, `-o`: Output folder where generated folders are created.
 - `--folders`, `-n`: Number of folders to create.
+- `--files`, `-f`: Number of MP3 files copied into each generated folder. Omit this to use all files.
 - `--prefix`: Add order prefixes to copied file names. This is enabled by default.
 - `--no-prefix`: Keep original file names.
 - `--clean`: Delete the output folder before generating new folders.
