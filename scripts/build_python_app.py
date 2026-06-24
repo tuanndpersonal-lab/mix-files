@@ -13,6 +13,8 @@ ENTRYPOINT = PYTHON_APP / "mix_files_pyqt.py"
 BUILD_ROOT = ROOT / "build" / "pyinstaller"
 DIST_ROOT = ROOT / "dist" / "python"
 APP_NAME = "MixFiles"
+APP_VERSION = "1.5.6"
+BUNDLE_IDENTIFIER = "com.tuanndpersonallab.mixfiles"
 
 
 def run(command: list[str], cwd: Path = ROOT) -> None:
@@ -43,6 +45,8 @@ def build() -> Path:
         "--windowed",
         "--name",
         APP_NAME,
+        "--osx-bundle-identifier",
+        BUNDLE_IDENTIFIER,
         "--distpath",
         str(DIST_ROOT),
         "--workpath",
@@ -74,9 +78,22 @@ def build() -> Path:
         expected = ", ".join(str(candidate) for candidate in candidates)
         raise SystemExit(f"Build finished but artifact was not found. Expected one of: {expected}")
 
+    finalize_macos_app(artifact)
+
     print(f"Built artifact: {artifact}")
     return artifact
 
+
+def finalize_macos_app(artifact: Path) -> None:
+    if platform.system() != "Darwin" or artifact.suffix != ".app":
+        return
+
+    plist = artifact / "Contents" / "Info.plist"
+    run(["/usr/libexec/PlistBuddy", "-c", f"Set :CFBundleIdentifier {BUNDLE_IDENTIFIER}", str(plist)])
+    run(["/usr/libexec/PlistBuddy", "-c", f"Set :CFBundleShortVersionString {APP_VERSION}", str(plist)])
+    run(["/usr/libexec/PlistBuddy", "-c", f"Set :CFBundleVersion {APP_VERSION}", str(plist)])
+    run(["/usr/libexec/PlistBuddy", "-c", "Set :CFBundleName MixFiles", str(plist)])
+    run(["/usr/libexec/PlistBuddy", "-c", "Set :CFBundleDisplayName MixFiles", str(plist)])
 
 def normalize_machine_name() -> str:
     machine = platform.machine().lower() or "unknown"
