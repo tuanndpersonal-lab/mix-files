@@ -21,6 +21,9 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QMainWindow,
+    QTableWidget,
+    QTableWidgetItem,
+    QAbstractItemView,
     QMessageBox,
     QPushButton,
     QSpinBox,
@@ -41,12 +44,18 @@ class MixOptions:
 
 
 @dataclass(frozen=True)
+class PlaylistEntry:
+    folder: Path
+    files: list[str]
+
+@dataclass(frozen=True)
 class MixResult:
     input_folder: Path
     output_folder: Path
     source_file_count: int
     files_per_folder: int
     generated_folders: list[Path]
+    playlists: list[PlaylistEntry]
 
 
 def get_mp3_files(input_folder: Path) -> list[Path]:
@@ -88,32 +97,44 @@ def generate_folders(options: MixOptions) -> MixResult:
     validate_options(options)
 
     files = get_mp3_files(options.input_folder)
-    files_per_folder = options.files_per_folder or len(files)
+    files_per_folder = options.files_per_folder or min(5, len(files))
 
     if files_per_folder > len(files):
         raise ValueError(f"Số file mỗi thư mục không được lớn hơn số file MP3 hiện có ({len(files)})")
 
+    if options.folder_count > len(files):
+        raise ValueError(
+            f"Với luật không lặp bài ở cùng vị trí, số playlist tối đa là {len(files)} "
+            f"vì thư mục nguồn có {len(files)} file MP3."
+        )
+
+    if files_per_folder == len(files) and options.folder_count > 1:
+        raise ValueError("Khi mỗi playlist dùng tất cả file, chỉ tạo được 1 playlist nếu không lặp lại cùng nhóm bài.")
+
     randomizer = random.Random(options.seed) if options.seed else random.Random()
+    playlist_files = build_position_balanced_playlists(files, options.folder_count, files_per_folder, randomizer)
 
     if options.clean_output and options.output_folder.exists():
         shutil.rmtree(options.output_folder)
 
     options.output_folder.mkdir(parents=True, exist_ok=True)
     generated_folders: list[Path] = []
+    playlists: list[PlaylistEntry] = []
 
-    for folder_index in range(options.folder_count):
+    for folder_index, selected_files in enumerate(playlist_files):
         folder_name = str(folder_index + 1).zfill(len(str(options.folder_count)))
         target_folder = options.output_folder / folder_name
-        shuffled_files = files[:]
-        randomizer.shuffle(shuffled_files)
-        selected_files = shuffled_files[:files_per_folder]
 
         target_folder.mkdir(parents=True, exist_ok=True)
         generated_folders.append(target_folder)
+        display_files: list[str] = []
 
         for file_index, source_file in enumerate(selected_files):
             target_name = prefix_name(file_index, source_file.name, len(selected_files)) if options.prefix_files else source_file.name
             shutil.copy2(source_file, target_folder / target_name)
+            display_files.append(target_name)
+
+        playlists.append(PlaylistEntry(folder=target_folder, files=display_files))
 
     return MixResult(
         input_folder=options.input_folder,
@@ -121,7 +142,75 @@ def generate_folders(options: MixOptions) -> MixResult:
         source_file_count=len(files),
         files_per_folder=files_per_folder,
         generated_folders=generated_folders,
+        playlists=playlists,
     )
+
+def build_position_balanced_playlists(
+    files: list[Path],
+    playlist_count: int,
+    files_per_playlist: int,
+    randomizer: random.Random,
+) -> list[list[Path]]:
+    ordered_files = files[:]
+    randomizer.shuffle(ordered_files)
+
+    offsets = list(range(len(ordered_files)))
+    randomizer.shuffle(offsets)
+    offsets = offsets[:files_per_playlist]
+
+    playlists: list[list[Path]] = []
+    used_groups: set[tuple[str, ...]] = set()
+
+    for playlist_index in range(playlist_count):
+        playlist = [ordered_files[(playlist_index + offset) % len(ordered_files)] for offset in offsets]
+        group_key = tuple(sorted(file.name for file in playlist))
+
+        if len({file.name for file in playlist}) != files_per_playlist or group_key in used_groups:
+            return build_position_balanced_playlists_with_search(files, playlist_count, files_per_playlist, randomizer)
+
+        used_groups.add(group_key)
+        playlists.append(playlist)
+
+    return playlists
+
+def build_position_balanced_playlists_with_search(
+    files: list[Path],
+    playlist_count: int,
+    files_per_playlist: int,
+    randomizer: random.Random,
+) -> list[list[Path]]:
+    used_positions = [set[str]() for _ in range(files_per_playlist)]
+    used_groups: set[tuple[str, ...]] = set()
+    playlists: list[list[Path]] = []
+
+    for _ in range(playlist_count):
+        for _attempt in range(10_000):
+            candidates = files[:]
+            randomizer.shuffle(candidates)
+            playlist: list[Path] = []
+
+            for position in range(files_per_playlist):
+                available = [file for file in candidates if file.name not in used_positions[position] and file not in playlist]
+                if not available:
+                    break
+                playlist.append(available[0])
+
+            if len(playlist) != files_per_playlist:
+                continue
+
+            group_key = tuple(sorted(file.name for file in playlist))
+            if group_key in used_groups:
+                continue
+
+            for position, file in enumerate(playlist):
+                used_positions[position].add(file.name)
+            used_groups.add(group_key)
+            playlists.append(playlist)
+            break
+        else:
+            raise ValueError("Không thể tạo thêm playlist thỏa điều kiện không lặp nhóm bài và không lặp vị trí.")
+
+    return playlists
 
 
 def open_folder(path: Path) -> None:
@@ -232,8 +321,28 @@ class MixFilesWindow(QMainWindow):
         self.status_label.setObjectName("status")
         layout.addWidget(self.status_label)
 
+        results_layout = QHBoxLayout()
+
+        folders_layout = QVBoxLayout()
+        folders_title = QLabel("Thư mục đã mix")
+        folders_title.setObjectName("sectionTitle")
         self.paths_list = QListWidget()
-        layout.addWidget(self.paths_list, stretch=1)
+        folders_layout.addWidget(folders_title)
+        folders_layout.addWidget(self.paths_list)
+
+        playlist_layout = QVBoxLayout()
+        playlist_title = QLabel("Bảng playlist")
+        playlist_title.setObjectName("sectionTitle")
+        self.playlist_table = QTableWidget()
+        self.playlist_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.playlist_table.setAlternatingRowColors(True)
+        self.playlist_table.verticalHeader().setVisible(False)
+        playlist_layout.addWidget(playlist_title)
+        playlist_layout.addWidget(self.playlist_table)
+
+        results_layout.addLayout(folders_layout, stretch=1)
+        results_layout.addLayout(playlist_layout, stretch=3)
+        layout.addLayout(results_layout, stretch=1)
 
         self.setCentralWidget(root)
         self.setStyleSheet(
@@ -241,6 +350,7 @@ class MixFilesWindow(QMainWindow):
             QMainWindow { background: #f7f7fb; }
             QLabel#title { font-size: 30px; font-weight: 700; color: #161621; }
             QLabel#subtitle { color: #55556a; margin-bottom: 12px; }
+            QLabel#sectionTitle { color: #25253a; font-weight: 700; margin-top: 8px; }
             QLabel#status { padding: 10px; border-radius: 8px; background: #ececf5; }
             QGroupBox { font-weight: 700; border: 1px solid #d9d9e8; border-radius: 10px; margin-top: 12px; padding: 14px; background: white; }
             QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; }
@@ -251,7 +361,8 @@ class MixFilesWindow(QMainWindow):
             QPushButton#primary { color: white; background: #4f46e5; border: 1px solid #4f46e5; font-weight: 700; }
             QPushButton#primary:hover { background: #4338ca; }
             QPushButton:disabled { color: #9999aa; background: #eeeeee; }
-            QListWidget { border: 1px solid #d9d9e8; border-radius: 10px; padding: 8px; background: white; }
+            QListWidget, QTableWidget { border: 1px solid #d9d9e8; border-radius: 10px; padding: 8px; background: white; }
+            QTableWidget::item { padding: 6px; }
             """
         )
 
@@ -286,7 +397,7 @@ class MixFilesWindow(QMainWindow):
 
         self.files_per_folder_spin = QSpinBox()
         self.files_per_folder_spin.setRange(0, 100000)
-        self.files_per_folder_spin.setSpecialValueText("Tất cả file")
+        self.files_per_folder_spin.setSpecialValueText("Mặc định 5 file")
         self.files_per_folder_spin.setValue(0)
 
         self.seed_edit = QLineEdit()
@@ -357,6 +468,7 @@ class MixFilesWindow(QMainWindow):
         self._set_busy(True)
         self._set_status("Đang tạo thư mục...")
         self.paths_list.clear()
+        self._render_playlist_table([])
         self.worker = MixWorker(options)
         self.worker.finished_successfully.connect(self._handle_success)
         self.worker.failed.connect(self._handle_failure)
@@ -369,6 +481,8 @@ class MixFilesWindow(QMainWindow):
         for folder in result.generated_folders:
             self.paths_list.addItem(str(folder))
 
+        self._render_playlist_table(result.playlists)
+
         self._set_status(
             f"Hoàn tất: đã tạo {len(result.generated_folders)} thư mục, "
             f"mỗi thư mục có {result.files_per_folder}/{result.source_file_count} file MP3."
@@ -376,6 +490,31 @@ class MixFilesWindow(QMainWindow):
         self.open_output_button.setEnabled(True)
         self.copy_paths_button.setEnabled(True)
         self._set_busy(False)
+
+    def _render_playlist_table(self, playlists: list[PlaylistEntry]) -> None:
+        if not playlists:
+            self.playlist_table.setRowCount(0)
+            self.playlist_table.setColumnCount(0)
+            return
+
+        max_positions = max(len(playlist.files) for playlist in playlists)
+        headers = ["Playlist", *[f"Vị trí {index + 1}" for index in range(max_positions)]]
+        self.playlist_table.setColumnCount(len(headers))
+        self.playlist_table.setRowCount(len(playlists))
+        self.playlist_table.setHorizontalHeaderLabels(headers)
+
+        for row, playlist in enumerate(playlists):
+            playlist_item = QTableWidgetItem(f"#{row + 1}")
+            playlist_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.playlist_table.setItem(row, 0, playlist_item)
+
+            for column, file_name in enumerate(playlist.files, start=1):
+                item = QTableWidgetItem(file_name)
+                item.setToolTip(file_name)
+                self.playlist_table.setItem(row, column, item)
+
+        self.playlist_table.resizeColumnsToContents()
+        self.playlist_table.resizeRowsToContents()
 
     def _handle_failure(self, message: str) -> None:
         self._set_status("Tạo thư mục thất bại")

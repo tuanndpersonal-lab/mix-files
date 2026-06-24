@@ -13,7 +13,7 @@ ENTRYPOINT = PYTHON_APP / "mix_files_pyqt.py"
 BUILD_ROOT = ROOT / "build" / "pyinstaller"
 DIST_ROOT = ROOT / "dist" / "python"
 APP_NAME = "MixFiles"
-APP_VERSION = "1.5.6"
+APP_VERSION = "1.5.7"
 BUNDLE_IDENTIFIER = "com.tuanndpersonallab.mixfiles"
 
 
@@ -91,7 +91,8 @@ def finalize_macos_app(artifact: Path) -> None:
     plist = artifact / "Contents" / "Info.plist"
     run(["/usr/libexec/PlistBuddy", "-c", f"Set :CFBundleIdentifier {BUNDLE_IDENTIFIER}", str(plist)])
     run(["/usr/libexec/PlistBuddy", "-c", f"Set :CFBundleShortVersionString {APP_VERSION}", str(plist)])
-    run(["/usr/libexec/PlistBuddy", "-c", f"Set :CFBundleVersion {APP_VERSION}", str(plist)])
+    subprocess.run(["/usr/libexec/PlistBuddy", "-c", "Print :CFBundleVersion", str(plist)], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    run(["/usr/libexec/PlistBuddy", "-c", f"Add :CFBundleVersion string {APP_VERSION}", str(plist)])
     run(["/usr/libexec/PlistBuddy", "-c", "Set :CFBundleName MixFiles", str(plist)])
     run(["/usr/libexec/PlistBuddy", "-c", "Set :CFBundleDisplayName MixFiles", str(plist)])
 

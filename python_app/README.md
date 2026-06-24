@@ -31,10 +31,11 @@ python mix_files_pyqt.py
 - Kéo thả thư mục vào ô `Thư mục nhạc nguồn` hoặc `Thư mục xuất kết quả`.
 - Có thể bấm nút `Chọn` nếu muốn mở hộp thoại chọn thư mục.
 - Chọn số thư mục cần tạo.
-- Chọn số file MP3 trong mỗi thư mục, hoặc để `Tất cả file`.
+- Chọn số file MP3 trong mỗi thư mục; để 0 sẽ mặc định lấy 5 file.
 - Tùy chọn thêm số thứ tự như `1_baihat.mp3`.
 - Tùy chọn xóa sạch thư mục xuất trước khi tạo.
 - Tùy chọn nhập mã trộn cố định để lần sau tạo lại cùng kết quả.
+- Xem bảng playlist theo từng vị trí, gồm prefix và tên file gốc.
 - Mở thư mục xuất và copy danh sách đường dẫn sau khi tạo xong.
 
 ## Build Thành Ứng Dụng

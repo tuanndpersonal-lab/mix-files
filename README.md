@@ -27,7 +27,7 @@ python mix_files_pyqt.py
 Tính năng chính:
 
 - Kéo thả thư mục trực tiếp vào ô nguồn hoặc ô xuất.
-- Chọn số thư mục cần tạo và số file MP3 mỗi thư mục.
+- Chọn số thư mục cần tạo và số file MP3 mỗi thư mục; để 0 sẽ mặc định lấy 5 file.
 - Giao diện và thông báo trong app dùng tiếng Việt.
 
 Xem thêm hướng dẫn build ở `python_app/README.md`.
