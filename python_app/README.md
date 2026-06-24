@@ -1,8 +1,8 @@
 # Mix Files Python + PyQt
 
-A simple desktop version of Mix Files built with Python and PyQt6.
+Bản desktop đơn giản của Mix Files, viết bằng Python và PyQt6.
 
-## Install
+## Cài Đặt
 
 ```bash
 cd python_app
@@ -11,7 +11,7 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-On Windows PowerShell:
+Trên Windows PowerShell:
 
 ```powershell
 cd python_app
@@ -20,23 +20,24 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-## Run
+## Chạy App
 
 ```bash
 python mix_files_pyqt.py
 ```
 
-## Features
+## Tính Năng
 
-- Choose source and output folders with native folder dialogs.
-- Set the number of folders to create.
-- Set how many MP3 files each folder should contain, or choose `All files`.
-- Optionally add numeric prefixes such as `1_song.mp3`.
-- Optionally clean the output folder before generating.
-- Optionally use a shuffle seed for repeatable output.
-- Open the generated output folder and copy generated paths.
+- Kéo thả thư mục vào ô `Thư mục nhạc nguồn` hoặc `Thư mục xuất kết quả`.
+- Có thể bấm nút `Chọn` nếu muốn mở hộp thoại chọn thư mục.
+- Chọn số thư mục cần tạo.
+- Chọn số file MP3 trong mỗi thư mục, hoặc để `Tất cả file`.
+- Tùy chọn thêm số thứ tự như `1_baihat.mp3`.
+- Tùy chọn xóa sạch thư mục xuất trước khi tạo.
+- Tùy chọn nhập mã trộn cố định để lần sau tạo lại cùng kết quả.
+- Mở thư mục xuất và copy danh sách đường dẫn sau khi tạo xong.
 
-## Build an executable
+## Build Thành Ứng Dụng
 
 ### macOS
 
@@ -45,24 +46,24 @@ cd ..
 ./scripts/build-python-macos.sh
 ```
 
-The generated `.app` and `.zip` are created in `dist/python/`.
+File `.app` và `.zip` được tạo trong `dist/python/`.
 
 ### Windows
 
-Run this on a Windows machine or GitHub Actions Windows runner:
+Chạy trên máy Windows hoặc GitHub Actions Windows runner:
 
 ```powershell
 cd ..
 .\scripts\build-python-windows.ps1
 ```
 
-The generated `.exe` folder and `.zip` are created in `dist\python\`.
+File `.exe` và `.zip` được tạo trong `dist\python\`.
 
 ### GitHub Actions
 
-The workflow at `.github/workflows/build-python-app.yml` builds both macOS and Windows artifacts. Run it manually from the Actions tab or push a tag matching `python-v*`.
+Workflow `.github/workflows/build-python-app.yml` build artifact cho macOS và Windows khi tạo tag release.
 
-If macOS blocks the downloaded app, right-click it and choose `Open`, or run:
+Nếu macOS chặn app tải về, right-click app rồi chọn `Open`, hoặc chạy:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/MixFiles.app

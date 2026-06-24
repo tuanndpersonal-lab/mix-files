@@ -1,6 +1,6 @@
 [package]
 name = "mix-files"
-version = "1.5.3"
+version = "1.5.4"
 description = "Shuffle MP3 files into multiple output folders"
 edition = "2021"
 

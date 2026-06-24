@@ -4,7 +4,7 @@ Mix Files now includes a Tauri desktop app built with Rust. The app provides a v
 
 ## Python + PyQt App
 
-Use this version if you want the simplest Python-based desktop app:
+Dùng bản này nếu bạn muốn app desktop đơn giản, dễ cài bằng Python/PyQt.
 
 ```bash
 cd python_app
@@ -14,7 +14,7 @@ python -m pip install -r requirements.txt
 python mix_files_pyqt.py
 ```
 
-On Windows PowerShell:
+Trên Windows PowerShell:
 
 ```powershell
 cd python_app
@@ -24,23 +24,27 @@ python -m pip install -r requirements.txt
 python mix_files_pyqt.py
 ```
 
-See `python_app/README.md` for PyInstaller packaging instructions.
+Tính năng chính:
 
-Build installable archives:
+- Kéo thả thư mục trực tiếp vào ô nguồn hoặc ô xuất.
+- Chọn số thư mục cần tạo và số file MP3 mỗi thư mục.
+- Giao diện và thông báo trong app dùng tiếng Việt.
+
+Xem thêm hướng dẫn build ở `python_app/README.md`.
+
+Build bản macOS:
 
 ```bash
 ./scripts/build-python-macos.sh
 ```
 
-Windows builds must run on Windows:
+Build Windows cần chạy trên Windows:
 
 ```powershell
 .\scripts\build-python-windows.ps1
 ```
 
-The GitHub Actions workflow `.github/workflows/build-python-app.yml` can build both macOS and Windows artifacts.
-
-If macOS says the app cannot be opened because it is from an unidentified developer, run:
+Nếu macOS báo app không mở được vì chưa xác minh nhà phát triển, chạy:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/MixFiles.app
